@@ -24,24 +24,30 @@ BEGIN;
                 );
         END IF;
 
+        -- create sequences
+        CREATE SEQUENCE IF NOT EXISTS user_id_seq;
+        CREATE SEQUENCE IF NOT EXISTS project_id_seq;
+        CREATE SEQUENCE IF NOT EXISTS bug_id_seq;
+        CREATE SEQUENCE IF NOT EXISTS bug_note_id_seq;
+
 
         -- create users table if does not exist
         CREATE TABLE IF NOT EXISTS user_ (
-             id SERIAL PRIMARY KEY,
+             id BIGINT DEFAULT nextval(''user_id_seq'') PRIMARY KEY,
              first_name VARCHAR(25) NOT NULL,
              last_name VARCHAR(25) NOT NULL,
              email_address VARCHAR(50) UNIQUE NOT NULL,
              username VARCHAR(16) UNIQUE NOT NULL,
              hashed_password VARCHAR NOT NULL,
-             title VARCHAR(50) NOT NULL,
-             role role_enum NOT NULL,
+             title VARCHAR(50),
+             role role_enum,
              created_on TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
              updated_on TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
         );
 
         -- create project table if does not exist
         CREATE TABLE IF NOT EXISTS project_ (
-            id SERIAL PRIMARY KEY,
+            id BIGINT DEFAULT nextval(''project_id_seq'') PRIMARY KEY,
             title VARCHAR(25) NOT NULL,
             description TEXT,
             status project_status_enum NOT NULL,
@@ -54,13 +60,13 @@ BEGIN;
         -- create bug table if does not exist
         -- keeps a record of details on a bug
         CREATE TABLE IF NOT EXISTS bug_ (
-            id SERIAL PRIMARY KEY,
+            id BIGINT DEFAULT nextval(''bug_id_seq'') PRIMARY KEY,
             title VARCHAR(25) NOT NULL,
             description TEXT,
             priority INT NOT NULL,
             status bug_status_enum NOT NULL,
             due_date TIMESTAMP,
-            project_id INT REFERENCES project_(id),
+            project_id BIGINT REFERENCES project_(id) NOT NULL,
             created_on TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
             updated_on TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
         );
@@ -68,12 +74,12 @@ BEGIN;
         -- create table bug_note_ if does not exist
         -- keeps a record of notes attached to a bug, by which user, and when
         CREATE TABLE IF NOT EXISTS bug_note_ (
-             id SERIAL PRIMARY KEY,
-             bug_id INT REFERENCES bug_(id),
-             note_content TEXT NOT NULL,
-             user_id INT REFERENCES user_(id),
-             created_on TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-             updated_on TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            id BIGINT DEFAULT nextval(''bug_note_id_seq'') PRIMARY KEY,
+            bug_id BIGINT REFERENCES bug_(id) NOT NULL,
+            note_content TEXT NOT NULL,
+            user_id BIGINT REFERENCES user_(id) NOT NULL,
+            created_on TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updated_on TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
             -- user can leave multiple notes on a bug, but created at different time
             -- useful when, say, user gets reassigned bug
              CONSTRAINT unique_bug_user_note UNIQUE (bug_id, user_id, created_on)
